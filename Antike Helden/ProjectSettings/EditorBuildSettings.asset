@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/BatbagED/Edvaldo.unity
+    path: Assets/Pereira/Scene/Main Menu.unity
     guid: b29422f931f1ead47a5c83e5a77da68f
   - enabled: 1
-    path: Assets/Pereira/Pereira.unity
+    path: Assets/Pereira/Scene/Nivel 1.unity
     guid: ede70e143923431489dcb443d711f595
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
