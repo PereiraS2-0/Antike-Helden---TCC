@@ -1,61 +1,66 @@
+ï»¿// using Unity.VisualScripting; // Remova se nÃ£o estiver usando Visual Scripting explicitamente para algo aqui
 using UnityEngine;
 
 public class TowerController : MonoBehaviour
 {
     [Header("Targeting Settings")]
-    [SerializeField] private float attackRange = 10f; // Raio de detecção e ataque
-    [SerializeField] private LayerMask enemyLayer;    // Configure no Inspector para a layer dos inimigos
-    [SerializeField] private float rotationSpeed = 0f; // Velocidade de rotação da torre
+    [SerializeField] private float attackRange = 10f;
+    [SerializeField] private LayerMask enemyLayer;
 
-    [Header("Attacking Settings")]
-    [SerializeField] private GameObject projectilePrefab; // Arraste o Prefab do Projétil aqui
-    [SerializeField] private Transform firePoint;       // Ponto de onde o projétil sai (um Empty GameObject filho da torre)
-    [SerializeField] private float attackRate = 1f;     // Tiros por segundo
-    public int projectileDamage = 1;       // Dano que cada projétil da torre causa
+    [Header("Normal Attacking Settings")]
+    public GameObject projectilePrefab;   // JÃ¡ era public
+    public Transform firePoint;           // Mude para public
+    public Transform currentTarget;       // Mude de private para public
+    public float attackRate = 1f; // Tiros normais por segundo
+    public int projectileDamage = 1;
+    [Header("Normal Attacking Settings")]
 
-    private Transform currentTarget;
-    private float attackCooldown = 0f;
+    private float normalAttackCooldown = 0f;
 
+    [Header("Special Attack Settings (Braco de Zeus)")]
+    public Transform bracoDeZeusObject; // Arraste aqui o GameObject que tem o script BracoDeZeus.cs
+                                        // Este campo serÃ¡ preenchido/verificado quando o "prefab do BraÃ§o de Zeus aparecer"
+    [SerializeField] private float specialAttackRate = 0.2f; // Ex: 1 tiro especial a cada 5 segundos (1/5 = 0.2)
+    private float specialAttackCooldown = 0f;
+    //private BracoDeZeus bracoDeZeusScript; // Cache do script
+
+    [Header("Power Integration")]
+    public PowerManager powerManager;
+
+    void Start()
+    {
+        // Tenta obter o script do BraÃ§o de Zeus se o objeto jÃ¡ estiver atribuÃ­do e ativo
+        // O cooldown especial pode comeÃ§ar jÃ¡ carregado ou nÃ£o, dependendo da sua preferÃªncia
+        // specialAttackCooldown = 1f / specialAttackRate; // ComeÃ§a em cooldown
+    }
+
+    // Modifique o Update():
     void Update()
     {
         FindNearestEnemy();
-        /*RotateTowardsTarget();*/
 
-        // Lógica de ataque
-        if (currentTarget != null) // Só tenta atirar se tiver um alvo
+        if (normalAttackCooldown > 0f)
         {
-            if (attackCooldown <= 0f)
-            {
-                Shoot();
-                attackCooldown = 1f / attackRate; // Reseta o cooldown
-            }
-            else
-            {
-                attackCooldown -= Time.deltaTime;
-            }
+            normalAttackCooldown -= Time.deltaTime;
         }
-        else
+
+        if (currentTarget != null && normalAttackCooldown <= 0f)
         {
-            // Se não há alvo, reseta o cooldown para que possa atirar imediatamente quando um alvo aparecer
-            // (ou pode deixar o cooldown continuar, dependendo da preferência de design)
-            attackCooldown = 0f;
+            ShootNormal();
+            normalAttackCooldown = 1f / attackRate;
         }
+
+        // Ativa todos os poderes
+        powerManager.ActivatePowers();
     }
 
     void FindNearestEnemy()
     {
-        // Encontra todos os colliders na layer de inimigos dentro do raio de ataque
         Collider2D[] enemiesInRange = Physics2D.OverlapCircleAll(transform.position, attackRange, enemyLayer);
-
         float shortestDistance = Mathf.Infinity;
         Transform nearestEnemy = null;
-
         foreach (Collider2D enemyCollider in enemiesInRange)
         {
-            // Verifica se o inimigo tem o script EnemyBehavior e não está morto (se for implementar isDead no futuro)
-            // EnemyBehavior enemyBehavior = enemyCollider.GetComponent<EnemyBehavior>();
-            // if (enemyBehavior != null && !enemyBehavior.IsDead()) // Supondo um método IsDead() no EnemyBehavior
-
             float distanceToEnemy = Vector2.Distance(transform.position, enemyCollider.transform.position);
             if (distanceToEnemy < shortestDistance)
             {
@@ -63,65 +68,36 @@ public class TowerController : MonoBehaviour
                 nearestEnemy = enemyCollider.transform;
             }
         }
-
-        // Define o alvo se um inimigo válido foi encontrado
-        if (nearestEnemy != null && shortestDistance <= attackRange)
-        {
-            currentTarget = nearestEnemy;
-        }
-        else
-        {
-            currentTarget = null; // Nenhum alvo válido encontrado
-        }
+        currentTarget = (nearestEnemy != null && shortestDistance <= attackRange) ? nearestEnemy : null;
     }
 
-    void RotateTowardsTarget()
-    {
-        if (currentTarget == null)
-        {
-            // Opcional: Fazer a torre voltar para uma rotação padrão ou parar de girar
-            // transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.identity, rotationSpeed * Time.deltaTime);
-            return;
-        }
-
-        // Calcula a direção para o alvo
-        Vector2 direction = (Vector2)currentTarget.position - (Vector2)transform.position;
-        direction.Normalize();
-
-        // Calcula o ângulo e rotaciona
-        // Subtrai 90 graus se o sprite da torre "aponta para cima" (ao longo do eixo Y local) por padrão
-       float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        Quaternion targetRotation = Quaternion.AngleAxis(angle - 90f, Vector3.forward);
-
-        // Suaviza a rotação
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-    }
-
-    void Shoot()
+    void ShootNormal()
     {
         if (projectilePrefab == null || firePoint == null)
         {
-            Debug.LogError("TowerController: Projectile Prefab ou Fire Point não configurados!");
+            Debug.LogError("TowerController: Projectile Prefab ou Fire Point nÃ£o configurados!");
             return;
         }
 
-        // Instancia o projétil
         GameObject projectileGO = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
         Projectile projectileScript = projectileGO.GetComponent<Projectile>();
 
         if (projectileScript != null)
         {
-            // Passa o dano atualizado!
             projectileScript.Seek(currentTarget, projectileDamage);
         }
         else
         {
-            Debug.LogError("TowerController: Prefab do projétil não tem o script Projectile.cs!");
-            Destroy(projectileGO); // se o prefab estiver errado, destrói
+            Debug.LogError("TowerController: Prefab do projÃ©til normal nÃ£o tem o script Projectile.cs!");
+            Destroy(projectileGO);
         }
     }
 
-    // Para visualizar o raio de ataque no Editor do Unity (muito útil!)
+    void ShootSpecial()
+    {
+        // bracoDeZeusScript jÃ¡ foi verificado como nÃ£o nulo antes de chamar este mÃ©todo
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

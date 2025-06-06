@@ -173,7 +173,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      raio zeus 1_0: 7888350652132137984
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

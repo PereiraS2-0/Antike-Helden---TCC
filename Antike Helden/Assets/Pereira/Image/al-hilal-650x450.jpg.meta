@@ -173,7 +173,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      al-hilal-650x450_0: -1172390150696565643
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

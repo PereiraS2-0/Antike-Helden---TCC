@@ -5,6 +5,7 @@ public class XPOrb : MonoBehaviour
     public int xpValue = 1;
     public float delayBeforeMove = 2f;
     public float moveSpeed = 5f;
+    public float collectionRadius = 0.5f;
 
     private Transform towerTarget;
     private bool movingToTower = false;
@@ -18,6 +19,8 @@ public class XPOrb : MonoBehaviour
     void StartMovingToTower()
     {
         movingToTower = true;
+        // Adiciona um efeito visual opcional
+        GetComponent<SpriteRenderer>().color = Color.green;
     }
 
     void Update()
@@ -26,7 +29,7 @@ public class XPOrb : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(transform.position, towerTarget.position, moveSpeed * Time.deltaTime);
 
-            if (Vector3.Distance(transform.position, towerTarget.position) < 0.1f)
+            if (Vector3.Distance(transform.position, towerTarget.position) < collectionRadius)
             {
                 CollectXP();
             }
@@ -35,8 +38,10 @@ public class XPOrb : MonoBehaviour
 
     void CollectXP()
     {
-        Debug.Log("XP Coletado!");
-        XPManager.Instance.AddXP(xpValue);
+        if (XPManager.Instance != null)
+        {
+            XPManager.Instance.AddXP(xpValue);
+        }
         Destroy(gameObject);
     }
 }

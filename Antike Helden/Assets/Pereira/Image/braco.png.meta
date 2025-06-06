@@ -198,7 +198,9 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      braco_0: 4664826913205137210
+      braco_1: 7686781317572056321
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
